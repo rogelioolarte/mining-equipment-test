@@ -1,0 +1,38 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "backend": {
+      "root": "backend",
+      "runtime": "container",
+      "entrypoint": "Dockerfile"
+    },
+    "frontend": {
+      "root": "frontend",
+      "installCommand": "bun install",
+      "buildCommand": "bun run build",
+      "outputDirectory": "dist/frontend/browser",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "backend",
+          "format": "url",
+          "env": "API_URL"
+        }
+      ]
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/backend/(.*)",
+      "destination": {
+        "service": "backend"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "frontend"
+      }
+    }
+  ]
+}
