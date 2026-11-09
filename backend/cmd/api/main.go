@@ -16,11 +16,10 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"sort"
 	"syscall"
 	"time"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 )
 
 func main() {
@@ -38,13 +37,6 @@ func run() error {
 	cfg, err := config.Load(config.DefaultFile)
 	if err != nil {
 		return fmt.Errorf("Config: %w", err)
-	}
-
-	// Temporal
-	envVars := os.Environ()
-	sort.Strings(envVars)
-	for _, env := range envVars {
-		fmt.Println(env)
 	}
 
 	err = cfg.Validate()
@@ -95,13 +87,14 @@ func run() error {
 	equipmentTypeHandler := handlers.NewnEquipmentTypeHandler(appLogger, equipmentTypeUseCase)
 	equipmentHandler := handlers.NewEquipmentHandler(appLogger, equipmentUseCase)
 	maintenanceHanlder := handlers.NewnMaintenanceHandler(appLogger, maintenanceUseCase)
+	healthHandler := handlers.NewHealthHandler(pgxPool)
 
 	router := chi.NewRouter()
 	router.Use(middlewares.RequestLogger(appLogger))
 	router.Use(middlewares.CORS(&cfg.HTTP))
 	router.Use(middlewares.Recover(appLogger))
 
-	routes.SetupRoutes(appLogger, router,
+	routes.SetupRoutes(appLogger, router, healthHandler,
 		equipmentTypeHandler, equipmentHandler, maintenanceHanlder)
 
 	server := &http.Server{

@@ -4,6 +4,7 @@ go 1.26.8
 
 require (
 	github.com/go-chi/chi v1.5.5
+	github.com/go-chi/chi/v5 v5.5.0
 	github.com/goccy/go-json v0.12.0
 	github.com/gofrs/uuid/v5 v5.5.1
 	github.com/jackc/pgx/v5 v5.12.0
