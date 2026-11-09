@@ -15,10 +15,9 @@ func SetupRoutes(
 	equipmentHandler *handlers.EquipmentHandler,
 	maintenanceHanlder *handlers.MaintenanceHandler,
 ) {
+	router.Route("/health", healthHandler.RegisterRoutes)
 	router.Route("/v1", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
-
-			r.Route("/health", healthHandler.RegisterRoutes)
 
 			r.Route("/equipment_type", func(r chi.Router) {
 				r.Get("/", equipmentTypeHandler.GetAll)
