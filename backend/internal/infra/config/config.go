@@ -98,7 +98,10 @@ func (c *Config) Secret(name string) string {
 }
 
 func Load(path string) (*Config, error) {
-	_ = godotenv.Load()
+	err := godotenv.Load()
+	if err != nil {
+		return nil, err
+	}
 
 	v := viper.New()
 	v.SetEnvPrefix("minning")
@@ -115,41 +118,41 @@ func Load(path string) (*Config, error) {
 		}
 	}
 
-	v.BindEnv("env")
-    v.BindEnv("http.host", "MINNING_HTTP_HOST")
-    v.BindEnv("http.port", "MINNING_HTTP_PORT")
-    v.BindEnv("http.allowed_origins", "MINNING_HTTP_ALLOWED_ORIGINS")
-    v.BindEnv("http.read_timeout", "MINNING_HTTP_READ_TIMEOUT")
-    v.BindEnv("http.write_timeout", "MINNING_HTTP_WRITE_TIMEOUT")
-    
-    v.BindEnv("db.host", "MINNING_DB_HOST")
-    v.BindEnv("db.port", "MINNING_DB_PORT")
-    v.BindEnv("db.name", "MINNING_DB_NAME")
-    v.BindEnv("db.user", "MINNING_DB_USER")
-    v.BindEnv("db.password", "MINNING_DB_PASSWORD")
-    v.BindEnv("db.sslmode", "MINNING_DB_SSLMODE")
-    v.BindEnv("db.max_conns", "MINNING_DB_MAX_CONNS")
-    v.BindEnv("db.min_conns", "MINNING_DB_MIN_CONNS")
-    v.BindEnv("db.lock_timeout", "MINNING_DB_LOCK_TIMEOUT")
-    v.BindEnv("db.statement_timeout", "MINNING_DB_STATEMENT_TIMEOUT")
+	v.BindEnv("env", "MINNING_ENV")
+	v.BindEnv("http.host", "MINNING_HTTP_HOST")
+	v.BindEnv("http.port", "MINNING_HTTP_PORT")
+	v.BindEnv("http.allowed_origins", "MINNING_HTTP_ALLOWED_ORIGINS")
+	v.BindEnv("http.read_timeout", "MINNING_HTTP_READ_TIMEOUT")
+	v.BindEnv("http.write_timeout", "MINNING_HTTP_WRITE_TIMEOUT")
 
-    v.BindEnv("migration.dir_path", "MINNING_MIGRATION_DIR_PATH")
-    v.BindEnv("migration.placeholders", "MINNING_MIGRATION_PLACEHOLDERS")
+	v.BindEnv("db.host", "MINNING_DB_HOST")
+	v.BindEnv("db.port", "MINNING_DB_PORT")
+	v.BindEnv("db.name", "MINNING_DB_NAME")
+	v.BindEnv("db.user", "MINNING_DB_USER")
+	v.BindEnv("db.password", "MINNING_DB_PASSWORD")
+	v.BindEnv("db.sslmode", "MINNING_DB_SSLMODE")
+	v.BindEnv("db.max_conns", "MINNING_DB_MAX_CONNS")
+	v.BindEnv("db.min_conns", "MINNING_DB_MIN_CONNS")
+	v.BindEnv("db.lock_timeout", "MINNING_DB_LOCK_TIMEOUT")
+	v.BindEnv("db.statement_timeout", "MINNING_DB_STATEMENT_TIMEOUT")
 
-    v.BindEnv("log.format", "MINNING_LOG_FORMAT")
-    v.BindEnv("log.level", "MINNING_LOG_LEVEL")
-    v.BindEnv("ratelimit.max_per_minute", "MINNING_RATELIMIT_MAX_PER_MINUTE")
+	v.BindEnv("migration.dir_path", "MINNING_MIGRATION_DIR_PATH")
+	v.BindEnv("migration.placeholders", "MINNING_MIGRATION_PLACEHOLDERS")
 
-    v.SetDefault("env", "development")
-    v.SetDefault("http.port", 8080)
-    v.SetDefault("http.read_timeout", "30s")
-    v.SetDefault("http.write_timeout", "30s")
-    v.SetDefault("db.port", 5432)
-    v.SetDefault("db.sslmode", "require")
-    v.SetDefault("db.max_conns", 5)
-    v.SetDefault("log.format", "text")
-    v.SetDefault("log.level", "debug")
-    v.SetDefault("ratelimit.max_per_minute", 20)
+	v.BindEnv("log.format", "MINNING_LOG_FORMAT")
+	v.BindEnv("log.level", "MINNING_LOG_LEVEL")
+	v.BindEnv("ratelimit.max_per_minute", "MINNING_RATELIMIT_MAX_PER_MINUTE")
+
+	v.SetDefault("env", "development")
+	v.SetDefault("http.port", 8080)
+	v.SetDefault("http.read_timeout", "30s")
+	v.SetDefault("http.write_timeout", "30s")
+	v.SetDefault("db.port", 5432)
+	v.SetDefault("db.sslmode", "require")
+	v.SetDefault("db.max_conns", 10)
+	v.SetDefault("log.format", "text")
+	v.SetDefault("log.level", "debug")
+	v.SetDefault("ratelimit.max_per_minute", 20)
 
 	c := &Config{
 		Env: v.GetString("env"),
