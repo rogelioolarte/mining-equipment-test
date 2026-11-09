@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sort"
 	"syscall"
 	"time"
 
@@ -39,12 +40,12 @@ func run() error {
 		return fmt.Errorf("Config: %w", err)
 	}
 
-	fmt.Println("[DEBUG] CONFIG LOADED - Env: %s, DB Host: %s, DB Port: %d, HTTP Port: %d",
-		cfg.Env,
-		cfg.DB.Host,
-		cfg.DB.Port,
-		cfg.HTTP.Port,
-	)
+	// Temporal
+	envVars := os.Environ()
+	sort.Strings(envVars)
+	for _, env := range envVars {
+		fmt.Println(env)
+	}
 
 	err = cfg.Validate()
 	if err != nil {
