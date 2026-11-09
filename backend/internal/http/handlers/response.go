@@ -9,10 +9,10 @@ import (
 // APIResponse represents the standard JSON envelope for all API responses.
 // It follows a consistent structure to simplify frontend parsing and error handling.
 type APIResponse struct {
-	Success bool        `json:"success"`         // Indicates if the request was successful
-	Data    interface{} `json:"data,omitempty"`  // Holds the main response payload
-	Error   *APIError   `json:"error,omitempty"` // Contains error details if success is false
-	Meta    *Meta       `json:"meta,omitempty"`  // Holds pagination or auxiliary information
+	Success bool      `json:"success"`         // Indicates if the request was successful
+	Data    any       `json:"data,omitempty"`  // Holds the main response payload
+	Error   *APIError `json:"error,omitempty"` // Contains error details if success is false
+	Meta    *Meta     `json:"meta,omitempty"`  // Holds pagination or auxiliary information
 }
 
 // APIError contains structured error information for the client.
@@ -38,11 +38,8 @@ func writeJSON(w http.ResponseWriter, statusCode int, payload interface{}) {
 }
 
 // Success sends a 200 OK response with the provided data payload.
-func Success(w http.ResponseWriter, data interface{}) {
-	writeJSON(w, http.StatusOK, APIResponse{
-		Success: true,
-		Data:    data,
-	})
+func Success(w http.ResponseWriter, data any) {
+	writeJSON(w, http.StatusOK, data)
 }
 
 // SuccessWithMeta sends a 200 OK response including both a data payload and metadata.
@@ -56,10 +53,7 @@ func SuccessWithMeta(w http.ResponseWriter, data interface{}, meta *Meta) {
 
 // Created sends a 201 Created response, typically used after a successful POST request.
 func Created(w http.ResponseWriter, data interface{}) {
-	writeJSON(w, http.StatusCreated, APIResponse{
-		Success: true,
-		Data:    data,
-	})
+	writeJSON(w, http.StatusCreated, data)
 }
 
 // NoContent sends a 204 No Content response, indicating a successful operation without a body.

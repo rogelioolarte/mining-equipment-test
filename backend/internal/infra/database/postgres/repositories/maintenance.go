@@ -30,7 +30,7 @@ func (r *MaintenancePostgreRepository) Create(ctx context.Context, e *entities.M
 	var i entities.Maintenance
 	err := r.m.DB(ctx).QueryRow(ctx, query, e.ID, e.EquipmentID, e.HourMeterAtMaintenance,
 		e.MaintenanceDate, e.Description).Scan(
-		&i.ID, &i.EquipmentID, &i.EquipmentType, &i.HourMeterAtMaintenance,
+		&i.ID, &i.EquipmentID, &i.HourMeterAtMaintenance,
 		&i.MaintenanceDate, &i.Description)
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -100,8 +100,8 @@ func (r *MaintenancePostgreRepository) GetAllByEquipmentID(ctx context.Context, 
 
 	for rows.Next() {
 		var i entities.Maintenance
-		if err := rows.Scan(&i.ID, &i.EquipmentID, &i.EquipmentCode, &i.EquipmentType,
-			&i.HourMeterAtMaintenance, &i.MaintenanceDate, &i.Description); err != nil {
+		if err := rows.Scan(&i.ID, &i.EquipmentID, &i.HourMeterAtMaintenance,
+			&i.MaintenanceDate, &i.Description); err != nil {
 			return nil, fmt.Errorf("failed to scan maintenance: %w", err)
 		}
 		is = append(is, &i)

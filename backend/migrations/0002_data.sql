@@ -120,21 +120,21 @@ VALUES
         '01a1b874-6c0c-7ebb-b20f-edcba9874595',
         '01a1b874-6c03-7e22-b20f-edcba987447e',
         600,
-        '2026-01-15 08:30:00',
+        '2026-01-15 08:30:00Z',
         'Mantenimiento preventivo general'
     ),
     (
         '01a1b874-6c0d-7ecc-b20f-edcba98745b4',
         '01a1b874-6c03-7e22-b20f-edcba987447e',
         850,
-        '2026-05-20 10:00:00',
+        '2026-05-20 10:00:00Z',
         'Cambio de filtros y lubricación'
     ),
     (
         '01a1b874-6c0e-7edd-b20f-edcba98745d3',
         '01a1b874-6c03-7e22-b20f-edcba987447e',
         1100,
-        '2026-09-12 09:00:00',
+        '2026-09-12 09:00:00Z',
         'Mantenimiento preventivo de motor'
     ),
 
@@ -144,7 +144,7 @@ VALUES
         '01a1b874-6c0f-7eee-b20f-edcba98745f2',
         '01a1b874-6c04-7e33-b20f-edcba987449d',
         700,
-        '2026-08-10 08:00:00',
+        '2026-08-10 08:00:00Z',
         'Mantenimiento preventivo general'
     ),
 
@@ -154,14 +154,14 @@ VALUES
         '01a1b874-6c10-7eff-b20f-edcba9874611',
         '01a1b874-6c06-7e55-b20f-edcba98744db',
         400,
-        '2026-02-10 09:00:00',
+        '2026-02-10 09:00:00Z',
         'Inspección y mantenimiento de componentes'
     ),
     (
         '01a1b874-6c11-7f10-b20f-edcba9874630',
         '01a1b874-6c06-7e55-b20f-edcba98744db',
         700,
-        '2026-08-18 11:00:00',
+        '2026-08-18 11:00:00Z',
         'Cambio de aceite y filtros'
     ),
 
@@ -171,7 +171,7 @@ VALUES
         '01a1b874-6c12-7f21-b20f-edcba987464f',
         '01a1b874-6c07-7e66-b20f-edcba98744fa',
         1000,
-        '2026-07-25 08:30:00',
+        '2026-07-25 08:30:00Z',
         'Mantenimiento preventivo general'
     ),
 
@@ -181,7 +181,7 @@ VALUES
         '01a1b874-6c13-7f32-b20f-edcba987466e',
         '01a1b874-6c08-7e77-b20f-edcba9874519',
         600,
-        '2026-10-15 10:00:00',
+        '2026-10-15 10:00:00Z',
         'Mantenimiento preventivo completo'
     ),
 
@@ -191,14 +191,14 @@ VALUES
         '01a1b874-6c14-7f43-b20f-edcba987468d',
         '01a1b874-6c09-7e88-b20f-edcba9874538',
         240,
-        '2026-03-12 08:00:00',
+        '2026-03-12 08:00:00Z',
         'Inspección del sistema de perforación'
     ),
     (
         '01a1b874-6c15-7f54-b20f-edcba98746ac',
         '01a1b874-6c09-7e88-b20f-edcba9874538',
         390,
-        '2026-08-22 09:30:00',
+        '2026-08-22 09:30:00Z',
         'Cambio de componentes y lubricación'
     ),
 
@@ -208,6 +208,6 @@ VALUES
         '01a1b874-6c16-7f65-b20f-edcba98746cb',
         '01a1b874-6c0a-7e99-b20f-edcba9874557',
         200,
-        '2026-09-05 08:30:00',
+        '2026-09-05 08:30:00Z',
         'Mantenimiento preventivo general'
     );

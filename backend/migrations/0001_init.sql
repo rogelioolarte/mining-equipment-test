@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS app.maintenance (
     id uuid PRIMARY KEY NOT NULL,
     equipment_id uuid NOT NULL REFERENCES app.equipment (id) ON DELETE CASCADE,
     hm_maintenance integer NOT NULL,
-    maintenance_date timestamp NOT NULL,
+    maintenance_date timestamptz NOT NULL,
     description varchar(100)
 );
 

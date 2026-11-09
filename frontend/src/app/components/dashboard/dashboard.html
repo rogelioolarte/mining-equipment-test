@@ -1,0 +1,97 @@
+<main class="dashboard-shell">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Inicio del panel de flota de Oreline">
+      <span class="brand-mark" aria-hidden="true">O</span>
+      <span>ORELINE <small>OPERACIONES</small></span>
+    </a>
+    <div class="topbar-meta"><span class="live-dot" aria-hidden="true"></span> Operaciones de flota</div>
+  </header>
+
+  <section class="page-heading" aria-labelledby="page-title">
+    <div>
+      <p class="eyebrow">GESTIÓN DE ACTIVOS <span> / </span> RESUMEN DE FLOTA</p>
+      <h1 id="page-title">Maquinaria</h1>
+      <p class="lede">Consulta la disponibilidad de la flota y mantén cada ciclo de servicio al día.</p>
+    </div>
+    <button class="button button-primary" type="button" (click)="startCreate()" [disabled]="equipmentTypes().length === 0">
+      <span aria-hidden="true">＋</span> Añadir equipo
+    </button>
+  </section>
+
+  <section class="summary" aria-label="Resumen de flota">
+    <article class="summary-item"><span class="summary-label">TAMAÑO DE FLOTA</span><strong>{{ equipment().length.toString().padStart(2, '0') }}</strong><span class="summary-note">unidades registradas</span></article>
+    <article class="summary-item"><span class="summary-label">ATENCIÓN DE SERVICIO</span><strong>{{ dueCount().toString().padStart(2, '0') }}</strong><span class="summary-note">próximo o requerido</span></article>
+    <article class="summary-item"><span class="summary-label">TIPOS DE EQUIPO</span><strong>{{ equipmentTypes().length.toString().padStart(2, '0') }}</strong><span class="summary-note">intervalos de servicio</span></article>
+    <div class="summary-accent" aria-hidden="true"><span>LISTO<br />PARA CAMPO</span></div>
+  </section>
+
+  @if (notice()) { <p class="notice" role="status">{{ notice() }}</p> }
+  @if (error()) { <div class="alert" role="alert"><span>{{ error() }}</span><button class="text-button" type="button" (click)="load()">Reintentar carga</button></div> }
+
+  @if (equipmentForm(); as form) {
+    <section class="form-panel" aria-labelledby="equipment-form-title">
+      <div class="panel-heading"><div><p class="eyebrow">REGISTRO DE FLOTA</p><h2 id="equipment-form-title">{{ form.id ? 'Editar equipo' : 'Añadir equipo' }}</h2></div><button class="icon-button" type="button" aria-label="Cerrar formulario de equipo" (click)="cancelEquipmentForm()">×</button></div>
+      <form class="form-grid" (submit)="saveEquipment($event)">
+        <label>Código del equipo<input name="code" type="text" required maxlength="40" autocomplete="off" [value]="form.code" placeholder="p. ej., EX-204" /></label>
+        <label>Tipo de equipo<select name="typeId" required [value]="form.typeId"><option value="" disabled>Selecciona un tipo</option>@for (type of equipmentTypes(); track type.id) { <option [value]="type.id">{{ type.name }} · intervalo de {{ type.maintenanceHours }} h</option> }</select></label>
+        <label>Lectura actual del horómetro<input name="currentHourMeter" type="number" required min="0" step="0.1" [value]="form.currentHourMeter" /></label>
+        <div class="form-actions"><button class="button button-secondary" type="button" (click)="cancelEquipmentForm()">Cancelar</button><button class="button button-primary" type="submit" [disabled]="saving()">{{ saving() ? 'Guardando…' : (form.id ? 'Guardar cambios' : 'Añadir a la flota') }}</button></div>
+      </form>
+    </section>
+  }
+
+  @if (maintenanceForm(); as form) {
+    <section class="form-panel maintenance-panel" aria-labelledby="maintenance-form-title">
+      <div class="panel-heading"><div><p class="eyebrow">REGISTRO DE SERVICIO</p><h2 id="maintenance-form-title">Registrar mantenimiento</h2></div><button class="icon-button" type="button" aria-label="Cerrar formulario de mantenimiento" (click)="cancelMaintenance()">×</button></div>
+      <p class="form-context">{{ equipmentCode(form.equipmentId) }} · Introduce la lectura del horómetro al finalizar el servicio.</p>
+      <form class="form-grid" (submit)="saveMaintenance($event)">
+        <label>Lectura del horómetro<input name="hmMaintenance" type="number" required min="0" step="0.1" [value]="form.hmMaintenance" /></label>
+        <label>Fecha de servicio<input name="maintenanceDate" type="date" required [value]="form.maintenanceDate" /></label>
+        <label class="wide-field">Trabajo realizado <span class="optional">(opcional)</span><textarea name="description" rows="2" maxlength="500" [value]="form.description" placeholder="Describe la inspección, las reparaciones o las piezas sustituidas"></textarea></label>
+        <div class="form-actions"><button class="button button-secondary" type="button" (click)="cancelMaintenance()">Cancelar</button><button class="button button-primary" type="submit" [disabled]="saving()">{{ saving() ? 'Registrando…' : 'Guardar registro de servicio' }}</button></div>
+      </form>
+    </section>
+  }
+
+  @if (deleteCandidate(); as candidate) {
+    <section class="confirm-panel" aria-labelledby="delete-title">
+      <div><p class="eyebrow">RETIRAR ACTIVO</p><h2 id="delete-title">¿Retirar {{ candidate.code }} de la flota?</h2><p>Se eliminará el registro del equipo. El historial de equipo será eliminado en consecuencia.</p></div>
+      <div class="confirm-actions"><button class="button button-secondary" type="button" (click)="cancelDelete()">Conservar equipo</button><button class="button button-danger" type="button" (click)="deleteEquipment()" [disabled]="saving()">{{ saving() ? 'Retirando…' : 'Retirar equipo' }}</button></div>
+    </section>
+  }
+
+  <section class="fleet-section" aria-labelledby="fleet-title" [attr.aria-busy]="loading()">
+    <div class="section-heading"><div><p class="eyebrow">ACTIVOS</p><h2 id="fleet-title">Registro de flota</h2></div><span class="unit-count">{{ equipment().length }} {{ equipment().length === 1 ? 'UNIDAD' : 'UNIDADES' }}</span></div>
+    @if (loading()) {
+      <div class="loading-state" role="status"><span class="spinner" aria-hidden="true"></span>Cargando registros de flota…</div>
+    } @else if (equipment().length === 0) {
+      <div class="empty-state"><span class="empty-icon" aria-hidden="true">⌁</span><h3>La flota aún no tiene equipos</h3><p>Añade la primera máquina para empezar a controlar sus horas de uso y los intervalos de servicio.</p><button class="button button-primary" type="button" (click)="startCreate()" [disabled]="equipmentTypes().length === 0">Añadir primer equipo</button></div>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th scope="col">EQUIPO</th><th scope="col">TIPO</th><th scope="col">HORÓMETRO</th><th scope="col">CICLO DE SERVICIO</th><th scope="col">ESTADO</th><th scope="col"><span class="sr-only">Acciones</span></th></tr></thead>
+          <tbody>
+            @for (item of equipment(); track trackEquipment($index, item)) {
+              <tr>
+                <td><span class="asset-code">{{ item.code }}</span><span class="asset-sub">ID {{ item.id.slice(0, 8) }}</span></td>
+                <td>{{ item.type }}</td>
+                <td><strong>{{ item.currentHourMeter.toLocaleString() }}</strong><span class="unit"> HM</span></td>
+                <td><div class="cycle-meter"><span>{{ item.hoursSinceMaintenance.toLocaleString() }} h</span><span class="cycle-total">de {{ typeInterval(item).toLocaleString() }} h</span></div><div class="meter-track" aria-hidden="true"><span [style.width.%]="meterPercent(item)" [class.meter-overdue]="statusFor(item).key === 'overdue'"></span></div></td>
+                <td><span class="status" [class.status-overdue]="statusFor(item).key === 'overdue'" [class.status-soon]="statusFor(item).key === 'due-soon'" [class.status-ready]="statusFor(item).key === 'on-track'"><span class="status-dot" aria-hidden="true"></span>{{ statusFor(item).label }}</span><span class="status-detail">{{ statusFor(item).detail }}</span></td>
+                <td><div class="row-actions"><button class="text-button" type="button" (click)="showHistory(item)">Historial</button><button class="text-button" type="button" (click)="startMaintenance(item)">Registrar mantenimiento</button><button class="more-button" type="button" [attr.aria-label]="'Editar ' + item.code" (click)="startEdit(item)">Editar</button><button class="more-button danger-text" type="button" [attr.aria-label]="'Retirar ' + item.code" (click)="askDelete(item)">Retirar</button></div></td>
+              </tr>
+              @if (historyFor() === item.id) {
+                <tr class="history-row"><td colspan="6"><div class="history-panel"><div class="history-heading"><div><p class="eyebrow">HISTORIAL DEL EQUIPO</p><h3>{{ item.code }} · Registro de mantenimiento</h3></div><button class="text-button" type="button" (click)="closeHistory()">Cerrar historial</button></div>
+                  @if (historyLoading()) { <p class="muted" role="status">Cargando historial de mantenimiento…</p> }
+                  @else if (history().length === 0) { <p class="muted">No hay registros de mantenimiento para este equipo.</p> }
+                  @else { <ol class="history-list">@for (entry of history(); track trackMaintenance($index, entry)) { <li><span class="history-date">{{ entry.maintenanceDate | date:'short' }}</span><span class="history-hour">{{ entry.hmMaintenance.toLocaleString() }} Horas de mantenimiento</span><span class="history-description">{{ entry.description || 'Servicio rutinario' }}</span></li> }</ol> }
+                </div></td></tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+  <footer><span>ORELINE OPERACIONES</span><span>SERVICIO DE FLOTA <b>·</b> SISTEMAS DE CAMPO</span></footer>
+</main>
