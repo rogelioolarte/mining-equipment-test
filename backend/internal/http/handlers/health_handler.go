@@ -22,8 +22,8 @@ func NewHealthHandler(db Checker) *HealthHandler {
 }
 
 func (h *HealthHandler) RegisterRoutes(r chi.Router) {
-	r.Get("/health/live", h.Liveness)
-	r.Get("/health/ready", h.Readiness)
+	r.Get("/live", h.Liveness)
+	r.Get("/ready", h.Readiness)
 }
 
 func (h *HealthHandler) Liveness(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +43,7 @@ func (h *HealthHandler) Readiness(w http.ResponseWriter, r *http.Request) {
 	// Verificar conexión a la base de datos
 	if err := h.db.Ping(ctx); err != nil {
 		w.WriteHeader(http.StatusServiceUnavailable)
-		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status": "DOWN",
 			"error":  "database connection failed",
 		})
