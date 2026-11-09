@@ -1,0 +1,40 @@
+<section class="form-panel" aria-labelledby="equipment-form-title">
+  <div class="panel-heading">
+    <div>
+      <p class="eyebrow">REGISTRO DE FLOTA</p>
+      <h2 id="equipment-form-title">{{ formState().id ? 'Editar equipo' : 'Añadir equipo' }}</h2>
+    </div>
+    <button class="icon-button" type="button" aria-label="Cerrar formulario de equipo" (click)="cancelled.emit()">×</button>
+  </div>
+  <form class="form-grid" [formRoot]="equipmentForm">
+    <label>
+      Código del equipo
+      <input type="text" autocomplete="off" [formField]="equipmentForm.code" placeholder="p. ej., EX-204" [attr.aria-invalid]="equipmentForm.code().touched() && equipmentForm.code().invalid()" [attr.aria-describedby]="equipmentForm.code().touched() && equipmentForm.code().invalid() ? 'equipment-code-error' : null" />
+      @if (equipmentForm.code().touched() && equipmentForm.code().invalid()) {
+        <span id="equipment-code-error" class="field-error" role="alert">{{ equipmentForm.code().errors()[0]?.message || 'Revisa el código del equipo.' }}</span>
+      }
+    </label>
+    <label>Tipo de equipo
+      <select [formField]="equipmentForm.typeId" [attr.aria-invalid]="equipmentForm.typeId().touched() && equipmentForm.typeId().invalid()" [attr.aria-describedby]="equipmentForm.typeId().touched() && equipmentForm.typeId().invalid() ? 'equipment-type-error' : null">
+        <option value="" disabled>Selecciona un tipo</option>
+        @for (type of equipmentTypes(); track type.id) {
+          <option [value]="type.id">{{ type.name }} · intervalo de {{ type.maintenanceHours }} h</option>
+        }
+      </select>
+      @if (equipmentForm.typeId().touched() && equipmentForm.typeId().invalid()) {
+        <span id="equipment-type-error" class="field-error" role="alert">{{ equipmentForm.typeId().errors()[0]?.message || 'Selecciona un tipo de equipo.' }}</span>
+      }
+    </label>
+    <label>
+      Lectura actual del horómetro
+      <input type="number" step="0.1" [formField]="equipmentForm.currentHourMeter" [attr.aria-invalid]="equipmentForm.currentHourMeter().touched() && equipmentForm.currentHourMeter().invalid()" [attr.aria-describedby]="equipmentForm.currentHourMeter().touched() && equipmentForm.currentHourMeter().invalid() ? 'equipment-meter-error' : null" />
+      @if (equipmentForm.currentHourMeter().touched() && equipmentForm.currentHourMeter().invalid()) {
+        <span id="equipment-meter-error" class="field-error" role="alert">{{ equipmentForm.currentHourMeter().errors()[0]?.message || 'Ingresa un horómetro válido.' }}</span>
+      }
+    </label>
+    <div class="form-actions">
+      <button class="button button-secondary" type="button" (click)="cancelled.emit()">Cancelar</button>
+      <button class="button button-primary" type="submit" [disabled]="saving() || loading() || equipmentForm().submitting()">{{ saving() ? 'Guardando…' : (formState().id ? 'Guardar cambios' : 'Añadir a la flota') }}</button>
+    </div>
+  </form>
+</section>

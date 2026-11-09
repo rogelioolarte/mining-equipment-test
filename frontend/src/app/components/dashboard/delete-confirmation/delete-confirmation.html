@@ -1,0 +1,11 @@
+<section class="confirm-panel" aria-labelledby="delete-title">
+  <div>
+    <p class="eyebrow">RETIRAR ACTIVO</p>
+    <h2 id="delete-title">¿Retirar {{ candidate().code }} de la flota?</h2>
+    <p>Se eliminará el registro del equipo. El historial de equipo será eliminado en consecuencia.</p>
+  </div>
+  <div class="confirm-actions">
+    <button class="button button-secondary" type="button" (click)="cancelled.emit()">Conservar equipo</button>
+    <button class="button button-danger" type="button" (click)="confirmed.emit()" [disabled]="saving() || loading()">{{ saving() ? 'Retirando…' : 'Retirar equipo' }}</button>
+  </div>
+</section>

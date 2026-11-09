@@ -1,20 +1,31 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { Equipment, EquipmentRequest } from '../../models/equipment';
-import { EquipmentType } from '../../models/equipment-type';
-import { Maintenance } from '../../models/maintenance';
+import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import type { Equipment, EquipmentRequest } from '../../models/equipment';
+import type { EquipmentType } from '../../models/equipment-type';
+import type { Maintenance } from '../../models/maintenance';
 import { EquipmentAPI } from '../../services/equipment-api';
 import { EquipmentTypeAPI } from '../../services/equipment-type-api';
 import { MaintenanceAPI } from '../../services/maintenance-api';
-import { DatePipe } from '@angular/common';
-
-type EquipmentForm = { id?: string; code: string; typeId: string; currentHourMeter: string };
-type MaintenanceForm = { equipmentId: string; hmMaintenance: string; maintenanceDate: string; description: string };
+import { DashboardSummary } from './dashboard-summary/dashboard-summary';
+import { DeleteConfirmationComponent } from './delete-confirmation/delete-confirmation';
+import { EquipmentFormComponent } from './equipment-form/equipment-form';
+import type { EquipmentFormState, EquipmentFormSubmission } from './equipment-form/equipment-form';
+import { EquipmentListComponent } from './equipment-list/equipment-list';
+import type { EquipmentListRow, EquipmentStatus } from './equipment-list/equipment-list';
+import { MaintenanceFormComponent } from './maintenance-form/maintenance-form';
+import type { MaintenanceFormState, MaintenanceFormSubmission } from './maintenance-form/maintenance-form';
 
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
-  imports: [DatePipe]
+  imports: [
+    DashboardSummary,
+    DeleteConfirmationComponent,
+    EquipmentFormComponent,
+    EquipmentListComponent,
+    MaintenanceFormComponent,
+  ],
 })
 export class Dashboard {
   private readonly equipmentApi = inject(EquipmentAPI);
@@ -27,34 +38,76 @@ export class Dashboard {
   protected readonly saving = signal(false);
   protected readonly error = signal('');
   protected readonly notice = signal('');
-  protected readonly equipmentForm = signal<EquipmentForm | null>(null);
-  protected readonly maintenanceForm = signal<MaintenanceForm | null>(null);
+  protected readonly equipmentForm = signal<EquipmentFormState | null>(null);
+  protected readonly maintenanceForm = signal<MaintenanceFormState | null>(null);
   protected readonly historyFor = signal<string | null>(null);
   protected readonly history = signal<Maintenance[]>([]);
   protected readonly historyLoading = signal(false);
+  protected readonly historyError = signal('');
   protected readonly deleteCandidate = signal<Equipment | null>(null);
-  protected readonly dueCount = computed(() => this.equipment().filter((item) => this.statusFor(item).key !== 'on-track').length);
+  protected readonly equipmentRows = computed<EquipmentListRow[]>(() => this.equipment().map((equipment) => {
+    const intervalHours = this.typeInterval(equipment);
+    const status = this.statusFor(equipment);
+    return {
+      equipment,
+      intervalHours,
+      meterPercent: intervalHours > 0
+        ? Math.min(100, Math.max(0, equipment.hoursSinceMaintenance / intervalHours * 100))
+        : 0,
+      status,
+    };
+  }));
+  protected readonly dueCount = computed(() => this.equipmentRows().filter((row) => row.status.key !== 'on-track').length);
+
+  private readonly destroyRef = inject(DestroyRef);
+  private loadRequestId = 0;
+  private historyRequestId = 0;
 
   constructor() {
     this.load();
   }
 
   protected load(): void {
+    const requestId = ++this.loadRequestId;
     this.loading.set(true);
     this.error.set('');
     let equipmentLoaded = false;
     let typesLoaded = false;
+    let equipmentError = '';
+    let typesError = '';
     const finish = (): void => {
-      if (equipmentLoaded && typesLoaded) this.loading.set(false);
+      if (requestId !== this.loadRequestId || !equipmentLoaded || !typesLoaded) return;
+      this.loading.set(false);
+      this.error.set([equipmentError, typesError].filter(Boolean).join(' '));
     };
 
-    this.equipmentApi.getAll().subscribe({
-      next: (items) => { this.equipment.set(items); equipmentLoaded = true; finish(); },
-      error: () => { this.error.set('No se pudo cargar la maquinaria. Comprueba la conexión e inténtalo de nuevo.'); equipmentLoaded = true; finish(); },
+    this.equipmentApi.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (items) => {
+        if (requestId !== this.loadRequestId) return;
+        this.equipment.set(items);
+        equipmentLoaded = true;
+        finish();
+      },
+      error: () => {
+        if (requestId !== this.loadRequestId) return;
+        equipmentError = 'No se pudo cargar la maquinaria. Comprueba la conexión e inténtalo de nuevo.';
+        equipmentLoaded = true;
+        finish();
+      },
     });
-    this.equipmentTypeApi.getAll().subscribe({
-      next: (items) => { this.equipmentTypes.set(items); typesLoaded = true; finish(); },
-      error: () => { this.error.set('No se pudieron cargar los tipos de maquinaria. Inténtalo de nuevo antes de añadir o editar equipos.'); typesLoaded = true; finish(); },
+    this.equipmentTypeApi.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (items) => {
+        if (requestId !== this.loadRequestId) return;
+        this.equipmentTypes.set(items);
+        typesLoaded = true;
+        finish();
+      },
+      error: () => {
+        if (requestId !== this.loadRequestId) return;
+        typesError = 'No se pudieron cargar los tipos de maquinaria. Inténtalo de nuevo antes de añadir o editar equipos.';
+        typesLoaded = true;
+        finish();
+      },
     });
   }
 
@@ -71,23 +124,20 @@ export class Dashboard {
 
   protected cancelEquipmentForm(): void { this.equipmentForm.set(null); }
 
-  protected saveEquipment(event: SubmitEvent): void {
-    event.preventDefault();
+  protected saveEquipment(values: EquipmentFormSubmission): void {
     const form = this.equipmentForm();
-    const element = event.currentTarget;
-    if (!form || !(element instanceof HTMLFormElement) || this.saving()) return;
-    const values = new FormData(element);
+    if (!form || this.saving() || this.loading()) return;
     const request: EquipmentRequest = {
-      code: String(values.get('code') ?? '').trim(),
-      typeId: String(values.get('typeId') ?? ''),
-      current_hour_meter: Number(values.get('currentHourMeter')),
+      code: values.code,
+      typeId: values.typeId,
+      current_hour_meter: values.currentHourMeter,
     };
     this.saving.set(true);
     this.error.set('');
     const save = form.id
       ? this.equipmentApi.updateById(form.id, request)
       : this.equipmentApi.create(request);
-    save.subscribe({
+    save.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (saved) => {
         this.equipment.update((items) => form.id ? items.map((item) => item.id === saved.id ? saved : item) : [saved, ...items]);
         this.equipmentForm.set(null);
@@ -103,10 +153,10 @@ export class Dashboard {
 
   protected deleteEquipment(): void {
     const item = this.deleteCandidate();
-    if (!item || this.saving()) return;
+    if (!item || this.saving() || this.loading()) return;
     this.saving.set(true);
     this.error.set('');
-    this.equipmentApi.deleteById(item.id).subscribe({
+    this.equipmentApi.deleteById(item.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.equipment.update((items) => items.filter((candidate) => candidate.id !== item.id));
         this.deleteCandidate.set(null);
@@ -125,22 +175,18 @@ export class Dashboard {
 
   protected cancelMaintenance(): void { this.maintenanceForm.set(null); }
 
-  protected saveMaintenance(event: SubmitEvent): void {
-    event.preventDefault();
+  protected saveMaintenance(values: MaintenanceFormSubmission): void {
     const current = this.maintenanceForm();
-    const element = event.currentTarget;
-    if (!current || !(element instanceof HTMLFormElement) || this.saving()) return;
-    const values = new FormData(element);
-    const maintenanceHour = Number(values.get('hmMaintenance'));
+    if (!current || this.saving() || this.loading()) return;
     const request = {
       equipmentId: current.equipmentId,
-      hmMaintenance: maintenanceHour,
-      maintenanceDate: this.formatToISOWithTimezone(new Date(String(values.get('maintenanceDate') ?? ''))),
-      description: String(values.get('description') ?? '').trim() || undefined,
+      hmMaintenance: values.hmMaintenance,
+      maintenanceDate: this.formatToISOWithTimezone(values.maintenanceDate),
+      description: values.description,
     };
     this.saving.set(true);
     this.error.set('');
-    this.maintenanceApi.create(request).subscribe({
+    this.maintenanceApi.create(request).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (entry) => {
         this.equipment.update((items) => items.map((item) => item.id === current.equipmentId
           ? {
@@ -165,32 +211,41 @@ export class Dashboard {
     this.loadHistory(item.id);
   }
 
-  protected closeHistory(): void { this.historyFor.set(null); this.history.set([]); }
-
-  private loadHistory(id: string): void {
-    this.historyLoading.set(true);
+  protected closeHistory(): void {
+    this.historyRequestId += 1;
+    this.historyFor.set(null);
     this.history.set([]);
-    this.equipmentApi.getAllMaintenancesByEquipmentId(id).subscribe({
-      next: (entries) => { this.history.set(entries); this.historyLoading.set(false); },
-      error: () => { this.error.set('No se pudo cargar el historial de mantenimiento.'); this.historyLoading.set(false); },
-    });
+    this.historyLoading.set(false);
+    this.historyError.set('');
   }
 
-  protected labelForType(typeId: string): string { return this.equipmentTypes().find((type) => type.id === typeId)?.name ?? ''; }
+  private loadHistory(id: string): void {
+    const requestId = ++this.historyRequestId;
+    this.historyLoading.set(true);
+    this.history.set([]);
+    this.historyError.set('');
+    this.equipmentApi.getAllMaintenancesByEquipmentId(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (entries) => {
+        if (requestId !== this.historyRequestId || this.historyFor() !== id) return;
+        this.history.set(entries);
+        this.historyLoading.set(false);
+      },
+      error: () => {
+        if (requestId !== this.historyRequestId || this.historyFor() !== id) return;
+        this.historyError.set('No se pudo cargar el historial de mantenimiento.');
+        this.historyLoading.set(false);
+      },
+    });
+  }
 
   protected typeInterval(item: Equipment): number {
     return this.equipmentTypes().find((type) => type.name === item.type || type.id === item.type)?.maintenanceHours
       ?? item.maintenanceIntervalHours;
   }
 
-  protected meterPercent(item: Equipment): number {
-    const interval = this.typeInterval(item);
-    return interval > 0 ? Math.min(100, Math.max(0, item.hoursSinceMaintenance / interval * 100)) : 0;
-  }
-
   protected equipmentCode(id: string): string { return this.equipment().find((item) => item.id === id)?.code ?? ''; }
 
-  protected statusFor(item: Equipment): { key: string; label: string; detail: string } {
+  protected statusFor(item: Equipment): EquipmentStatus {
     const interval = this.typeInterval(item);
     const remaining = interval - item.hoursSinceMaintenance;
     if (remaining <= 0) return { key: 'overdue', label: 'Requiere mantenimiento', detail: `${Math.abs(remaining).toLocaleString()} h sobre el intervalo` };
@@ -198,20 +253,18 @@ export class Dashboard {
     return { key: 'on-track', label: 'En intervalo', detail: `${remaining.toLocaleString()} h restantes` };
   }
 
-  protected trackEquipment(_index: number, item: Equipment): string { return item.id; }
-  protected trackMaintenance(_index: number, item: Maintenance): string { return item.id; }
-
-  protected formatToISOWithTimezone(date: Date) {
+  protected formatToISOWithTimezone(date: string) {
+    let data = new Date(date)
     const pad = (num: number) => String(num).padStart(2, '0');
 
-    const year = date.getFullYear();
-    const month = pad(date.getMonth() + 1);
-    const day = pad(date.getDate());
-    const hours = pad(date.getHours());
-    const minutes = pad(date.getMinutes());
-    const seconds = pad(date.getSeconds());
+    const year = data.getFullYear();
+    const month = pad(data.getMonth() + 1);
+    const day = pad(data.getDate());
+    const hours = pad(data.getHours());
+    const minutes = pad(data.getMinutes());
+    const seconds = pad(data.getSeconds());
 
-    const tzOffset = -date.getTimezoneOffset();
+    const tzOffset = -data.getTimezoneOffset();
     const sign = tzOffset >= 0 ? '+' : '-';
     const absOffset = Math.abs(tzOffset);
     const offsetHours = pad(Math.floor(absOffset / 60));

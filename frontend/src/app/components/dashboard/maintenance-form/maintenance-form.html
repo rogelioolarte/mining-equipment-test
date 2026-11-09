@@ -1,0 +1,37 @@
+<section class="form-panel maintenance-panel" aria-labelledby="maintenance-form-title">
+  <div class="panel-heading">
+    <div>
+      <p class="eyebrow">REGISTRO DE SERVICIO</p>
+      <h2 id="maintenance-form-title">Registrar mantenimiento</h2>
+    </div>
+    <button class="icon-button" type="button" aria-label="Cerrar formulario de mantenimiento" (click)="cancelled.emit()">×</button>
+  </div>
+  <p class="form-context">{{ equipmentCode() }} · Introduce la lectura del horómetro al finalizar el servicio.</p>
+  <form class="form-grid" [formRoot]="maintenanceForm">
+    <label>
+      Lectura del horómetro
+      <input type="number" step="0.1" [formField]="maintenanceForm.hmMaintenance" [attr.aria-invalid]="maintenanceForm.hmMaintenance().touched() && maintenanceForm.hmMaintenance().invalid()" [attr.aria-describedby]="maintenanceForm.hmMaintenance().touched() && maintenanceForm.hmMaintenance().invalid() ? 'maintenance-meter-error' : null" />
+      @if (maintenanceForm.hmMaintenance().touched() && maintenanceForm.hmMaintenance().invalid()) {
+        <span id="maintenance-meter-error" class="field-error" role="alert">{{ maintenanceForm.hmMaintenance().errors()[0]?.message || 'Ingresa un horómetro válido.' }}</span>
+      }
+    </label>
+    <label>
+      Fecha de servicio
+      <input type="date" [formField]="maintenanceForm.maintenanceDate" [attr.aria-invalid]="maintenanceForm.maintenanceDate().touched() && maintenanceForm.maintenanceDate().invalid()" [attr.aria-describedby]="maintenanceForm.maintenanceDate().touched() && maintenanceForm.maintenanceDate().invalid() ? 'maintenance-date-error' : null" />
+      @if (maintenanceForm.maintenanceDate().touched() && maintenanceForm.maintenanceDate().invalid()) {
+        <span id="maintenance-date-error" class="field-error" role="alert">{{ maintenanceForm.maintenanceDate().errors()[0]?.message || 'Ingresa una fecha válida.' }}</span>
+      }
+    </label>
+    <label class="wide-field">
+      Trabajo realizado <span class="optional">(opcional)</span>
+      <textarea rows="2" [formField]="maintenanceForm.description" placeholder="Describe la inspección, las reparaciones o las piezas sustituidas" [attr.aria-invalid]="maintenanceForm.description().touched() && maintenanceForm.description().invalid()" [attr.aria-describedby]="maintenanceForm.description().touched() && maintenanceForm.description().invalid() ? 'maintenance-description-error' : null"></textarea>
+      @if (maintenanceForm.description().touched() && maintenanceForm.description().invalid()) {
+        <span id="maintenance-description-error" class="field-error" role="alert">{{ maintenanceForm.description().errors()[0]?.message || 'La descripción es demasiado larga.' }}</span>
+      }
+    </label>
+    <div class="form-actions">
+      <button class="button button-secondary" type="button" (click)="cancelled.emit()">Cancelar</button>
+      <button class="button button-primary" type="submit" [disabled]="saving() || loading() || maintenanceForm().submitting()">{{ saving() ? 'Registrando…' : 'Guardar registro de servicio' }}</button>
+    </div>
+  </form>
+</section>

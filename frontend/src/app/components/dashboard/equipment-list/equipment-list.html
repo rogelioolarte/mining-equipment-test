@@ -1,0 +1,141 @@
+<section class="fleet-section" aria-labelledby="fleet-title" [attr.aria-busy]="loading()">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">ACTIVOS</p>
+      <h2 id="fleet-title">Registro de flota</h2>
+    </div>
+    <span class="unit-count">{{ rows().length }} {{ rows().length === 1 ? 'UNIDAD' : 'UNIDADES' }}</span>
+  </div>
+  @if (loading()) {
+    <div class="loading-state" role="status"><span class="spinner" aria-hidden="true"></span>Cargando registros de flota…</div>
+  } @else if (rows().length === 0) {
+    <div class="empty-state">
+      <span class="empty-icon" aria-hidden="true">⌁</span>
+      <h3>La flota aún no tiene equipos</h3>
+      <p>Añade la primera máquina para empezar a controlar sus horas de uso y los intervalos de servicio.</p>
+      <button class="button button-primary" type="button" (click)="createEquipment.emit()" [disabled]="!canCreate() || saving()">Añadir primer equipo</button>
+    </div>
+  } @else {
+    <div class="list-tools">
+      <label>
+        Buscar por código o tipo
+        <input type="search" [value]="searchTerm()" (input)="updateSearch($event)" />
+      </label>
+      <label>
+        Estado de servicio
+        <select [value]="statusFilter()" (change)="updateStatusFilter($event)">
+          <option value="all">Todos los estados</option>
+          <option value="on-track">En intervalo</option>
+          <option value="due-soon">Mantenimiento próximo</option>
+          <option value="overdue">Requiere mantenimiento</option>
+        </select>
+      </label>
+      <label>
+        Tipo de equipo
+        <select [value]="typeFilter()" (change)="updateTypeFilter($event)">
+          <option value="all">Todos los tipos</option>
+          @for (type of typeOptions(); track type) {
+            <option [value]="type">{{ type }}</option>
+          }
+        </select>
+      </label>
+    </div>
+    @if (filteredRows().length === 0) {
+      <div class="empty-state no-results">
+        <h3>No hay equipos que coincidan</h3>
+        <p>Ajusta la búsqueda o los filtros para volver a ver la flota.</p>
+        <button class="button button-secondary" type="button" (click)="clearFilters()">Limpiar filtros</button>
+      </div>
+    } @else {
+    @if (!compactView()) {
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">EQUIPO</th>
+            <th scope="col">TIPO</th>
+            <th scope="col">HORÓMETRO</th>
+            <th scope="col">CICLO DE SERVICIO</th>
+            <th scope="col">ESTADO</th>
+            <th scope="col"><span class="sr-only">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of visibleRows(); track row.equipment.id) {
+            <tr>
+              <td><span class="asset-code">{{ row.equipment.code }}</span><span class="asset-sub">ID {{ row.equipment.id.slice(0, 8) }}</span></td>
+              <td>{{ row.equipment.type }}</td>
+              <td><strong>{{ row.equipment.currentHourMeter.toLocaleString() }}</strong><span class="unit"> HM</span></td>
+              <td>
+                <div class="cycle-meter"><span>{{ row.equipment.hoursSinceMaintenance.toLocaleString() }} h</span><span class="cycle-total">de {{ row.intervalHours.toLocaleString() }} h</span></div>
+                <div class="meter-track" aria-hidden="true"><span [style.width.%]="row.meterPercent" [class.meter-overdue]="row.status.key === 'overdue'"></span></div>
+              </td>
+              <td>
+                <span class="status" [class.status-overdue]="row.status.key === 'overdue'" [class.status-soon]="row.status.key === 'due-soon'" [class.status-ready]="row.status.key === 'on-track'"><span class="status-dot" aria-hidden="true"></span>{{ row.status.label }}</span>
+                <span class="status-detail">{{ row.status.detail }}</span>
+              </td>
+              <td>
+                <div class="row-actions">
+                  <button class="text-button" type="button" (click)="showHistory.emit(row.equipment)">Historial</button>
+                  <button class="text-button" type="button" [disabled]="saving()" (click)="registerMaintenance.emit(row.equipment)">Registrar mantenimiento</button>
+                  <button class="more-button" type="button" [disabled]="saving()" [attr.aria-label]="'Editar ' + row.equipment.code" (click)="editEquipment.emit(row.equipment)">Editar</button>
+                  <button class="more-button danger-text" type="button" [disabled]="saving()" [attr.aria-label]="'Retirar ' + row.equipment.code" (click)="deleteEquipment.emit(row.equipment)">Retirar</button>
+                </div>
+              </td>
+            </tr>
+            @if (historyFor() === row.equipment.id) {
+              <tr class="history-row">
+                <td colspan="6">
+                  <app-maintenance-history [equipmentCode]="row.equipment.code" [entries]="history()" [loading]="historyLoading()" [error]="historyError()" (close)="closeHistory.emit()" />
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+    }
+    @if (compactView()) {
+    <div class="equipment-cards">
+      @for (row of visibleRows(); track row.equipment.id) {
+        <article class="equipment-card" [attr.aria-labelledby]="'equipment-card-' + row.equipment.id">
+          <div class="equipment-card-heading">
+            <div>
+              <h3 class="asset-code" [id]="'equipment-card-' + row.equipment.id">{{ row.equipment.code }}</h3>
+              <span class="asset-sub">ID {{ row.equipment.id.slice(0, 8) }}</span>
+            </div>
+            <span class="status" [class.status-overdue]="row.status.key === 'overdue'" [class.status-soon]="row.status.key === 'due-soon'" [class.status-ready]="row.status.key === 'on-track'"><span class="status-dot" aria-hidden="true"></span>{{ row.status.label }}</span>
+          </div>
+          <dl class="equipment-card-details">
+            <div><dt>Tipo de equipo</dt><dd>{{ row.equipment.type }}</dd></div>
+            <div><dt>Horómetro actual</dt><dd>{{ row.equipment.currentHourMeter.toLocaleString() }} HM</dd></div>
+            <div class="equipment-card-cycle">
+              <dt>Ciclo de servicio</dt>
+              <dd><span>{{ row.equipment.hoursSinceMaintenance.toLocaleString() }} h</span><span class="cycle-total">de {{ row.intervalHours.toLocaleString() }} h</span></dd>
+              <div class="meter-track" aria-hidden="true"><span [style.width.%]="row.meterPercent" [class.meter-overdue]="row.status.key === 'overdue'"></span></div>
+              <span class="status-detail">{{ row.status.detail }}</span>
+            </div>
+          </dl>
+          <div class="equipment-card-actions" role="group" [attr.aria-label]="'Acciones para ' + row.equipment.code">
+            <button class="text-button" type="button" [attr.aria-expanded]="historyFor() === row.equipment.id" (click)="showHistory.emit(row.equipment)">Historial</button>
+            <button class="text-button" type="button" [disabled]="saving()" (click)="registerMaintenance.emit(row.equipment)">Registrar mantenimiento</button>
+            <button class="more-button" type="button" [disabled]="saving()" [attr.aria-label]="'Editar ' + row.equipment.code" (click)="editEquipment.emit(row.equipment)">Editar</button>
+            <button class="more-button danger-text" type="button" [disabled]="saving()" [attr.aria-label]="'Retirar ' + row.equipment.code" (click)="deleteEquipment.emit(row.equipment)">Retirar</button>
+          </div>
+          @if (historyFor() === row.equipment.id) {
+            <app-maintenance-history [equipmentCode]="row.equipment.code" [entries]="history()" [loading]="historyLoading()" [error]="historyError()" [compact]="true" (close)="closeHistory.emit()" />
+          }
+        </article>
+      }
+    </div>
+    }
+    @if (pageCount() > 1) {
+      <nav class="pagination" aria-label="Paginación de equipos">
+        <button class="button button-secondary" type="button" (click)="previousPage()" [disabled]="safeCurrentPage() === 1">Anterior</button>
+        <span>Página {{ safeCurrentPage() }} de {{ pageCount() }}</span>
+        <button class="button button-secondary" type="button" (click)="nextPage()" [disabled]="safeCurrentPage() === pageCount()">Siguiente</button>
+      </nav>
+    }
+    }
+  }
+</section>

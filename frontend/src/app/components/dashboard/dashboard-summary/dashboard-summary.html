@@ -1,0 +1,18 @@
+<section class="summary" aria-label="Resumen de flota">
+  <article class="summary-item">
+    <span class="summary-label">TAMAÑO DE FLOTA</span>
+    <strong>{{ equipmentCount().toString().padStart(2, '0') }}</strong>
+    <span class="summary-note">unidades registradas</span>
+  </article>
+  <article class="summary-item">
+    <span class="summary-label">ATENCIÓN DE SERVICIO</span>
+    <strong>{{ dueCount().toString().padStart(2, '0') }}</strong>
+    <span class="summary-note">próximo o requerido</span>
+  </article>
+  <article class="summary-item">
+    <span class="summary-label">TIPOS DE EQUIPO</span>
+    <strong>{{ equipmentTypeCount().toString().padStart(2, '0') }}</strong>
+    <span class="summary-note">intervalos de servicio</span>
+  </article>
+  <div class="summary-accent" aria-hidden="true"><span>LISTO<br />PARA CAMPO</span></div>
+</section>

@@ -1,0 +1,31 @@
+<section
+  class="history-panel"
+  [class.mobile-history-panel]="compact()"
+  role="region"
+  [attr.aria-label]="'Historial de mantenimiento de ' + equipmentCode()"
+>
+  <div class="history-heading">
+    <div>
+      <p class="eyebrow">HISTORIAL DEL EQUIPO</p>
+      <h3>{{ equipmentCode() }} · Registro de mantenimiento</h3>
+    </div>
+    <button class="text-button" type="button" (click)="close.emit()">Cerrar historial</button>
+  </div>
+  @if (loading()) {
+    <p class="muted" role="status">Cargando historial de mantenimiento…</p>
+  } @else if (error()) {
+    <p class="history-error" role="alert">{{ error() }}</p>
+  } @else if (entries().length === 0) {
+    <p class="muted">No hay registros de mantenimiento para este equipo.</p>
+  } @else {
+    <ol class="history-list">
+      @for (entry of entries(); track entry.id) {
+        <li>
+          <span class="history-date">{{ entry.maintenanceDate | date:'short' }}</span>
+          <span class="history-hour">{{ entry.hmMaintenance.toLocaleString() }} Horas de mantenimiento</span>
+          <span class="history-description">{{ entry.description || 'Servicio rutinario' }}</span>
+        </li>
+      }
+    </ol>
+  }
+</section>

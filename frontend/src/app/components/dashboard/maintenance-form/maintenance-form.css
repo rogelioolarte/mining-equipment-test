@@ -1,0 +1,147 @@
+:host {
+  display: block;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+input, textarea {
+  font: inherit;
+}
+
+input:focus-visible, textarea:focus-visible {
+  outline: 2px solid #abca5a;
+  outline-offset: 2px;
+}
+
+.form-panel {
+  margin-top: 1rem;
+  padding: 1.25rem 1.4rem;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+
+.eyebrow {
+  margin: 0 0 .25rem;
+  color: #71817a;
+  font-size: .64rem;
+  line-height: 1.35;
+  letter-spacing: .16em;
+  font-weight: 750;
+}
+
+h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.45rem;
+  font-weight: 500;
+  letter-spacing: -.025em;
+}
+
+.icon-button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  background: white;
+  color: var(--muted);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.form-context {
+  margin: -.55rem 0 1rem;
+  color: var(--muted);
+  font-size: .81rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: .9rem 1rem;
+}
+
+.form-grid label {
+  display: grid;
+  gap: .42rem;
+  color: #31463d;
+  font-size: .75rem;
+  font-weight: 680;
+}
+
+.form-grid input, .form-grid textarea {
+  width: 100%;
+  min-height: 41px;
+  border: 1px solid #cbd6d0;
+  border-radius: 2px;
+  padding: .6rem .7rem;
+  background: white;
+  color: #172722;
+  font-size: .82rem;
+}
+
+.form-grid textarea {
+  resize: vertical;
+}
+
+.form-grid input::placeholder, .form-grid textarea::placeholder {
+  color: #8a9690;
+}
+
+.optional {
+  display: inline;
+  color: #65736c;
+  font-weight: 400;
+}
+
+.wide-field {
+  grid-column: span 2;
+}
+
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: .6rem;
+  padding-top: .25rem;
+}
+
+@media (max-width: 900px) {
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wide-field {
+    grid-column: auto;
+  }
+
+  .form-actions {
+    justify-content: stretch;
+  }
+
+  .form-actions .button {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: .01ms !important;
+  }
+}
