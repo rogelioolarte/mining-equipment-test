@@ -98,10 +98,7 @@ func (c *Config) Secret(name string) string {
 }
 
 func Load(path string) (*Config, error) {
-	err := godotenv.Load()
-	if err != nil {
-		return nil, err
-	}
+	_ = godotenv.Load()
 
 	v := viper.New()
 	v.SetEnvPrefix("minning")
