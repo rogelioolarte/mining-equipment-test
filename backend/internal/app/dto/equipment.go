@@ -7,10 +7,9 @@ import (
 )
 
 type EquipmentRequest struct {
-	Code                     string `json:"code"`
-	Type                     string `json:"type"`
-	CurrentHourMeter         int32  `json:"current_hour_meter"`
-	MaintenanceIntervalHours int32  `json:"maintenance_interval_hours"`
+	Code             string    `json:"code"`
+	TypeID           uuid.UUID `json:"type_id"`
+	CurrentHourMeter int32     `json:"current_hour_meter"`
 }
 
 type EquipmentResponse struct {
@@ -32,10 +31,9 @@ func (e *EquipmentRequest) ToEntity() (*entities.Equipment, error) {
 
 	return &entities.Equipment{
 		ID:               id,
-		EquipmentType:    &e.Type,
+		TypeID:           e.TypeID,
 		Code:             e.Code,
 		CurrentHourMeter: e.CurrentHourMeter,
-		MaintenanceHours: &e.MaintenanceIntervalHours,
 	}, nil
 }
 

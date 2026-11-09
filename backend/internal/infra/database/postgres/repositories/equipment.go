@@ -2,12 +2,15 @@ package repositories
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"minning/internal/domain/entities"
 	"minning/internal/domain/ports"
 	"minning/internal/domain/ports/repositories"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type EquipmentPostgreRepository struct {
@@ -25,10 +28,16 @@ func (r *EquipmentPostgreRepository) Create(ctx context.Context, e *entities.Equ
 	RETURNING id, type_id, code, current_h_meter`
 
 	var i entities.Equipment
-	err := r.m.DB(ctx).QueryRow(ctx, query, e.ID, e.TypeID, e.Code,
-		e.CurrentHourMeter, e.LastMaintenanceHourMeter).Scan(
+	err := r.m.DB(ctx).QueryRow(ctx, query, e.ID, e.TypeID, e.Code, e.CurrentHourMeter).Scan(
 		&i.ID, &i.TypeID, &i.Code, &i.CurrentHourMeter)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, entities.ErrAlreadyExistsEntity
+		}
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, entities.ErrInvalidEntity
+		}
 		return nil, fmt.Errorf("failed to create equipment: %w", err)
 	}
 
@@ -50,6 +59,13 @@ func (r *EquipmentPostgreRepository) UpdateByID(ctx context.Context, e *entities
 		e.CurrentHourMeter).Scan(
 		&i.ID, &i.TypeID, &i.Code, &i.CurrentHourMeter)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, entities.ErrAlreadyExistsEntity
+		}
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, entities.ErrNotFoundEntity
+		}
 		return nil, fmt.Errorf("failed to update equipment: %w", err)
 	}
 
@@ -87,6 +103,9 @@ func (r *EquipmentPostgreRepository) GetByID(ctx context.Context, id uuid.UUID) 
 		&i.ID, &i.TypeID, &i.Code, &i.CurrentHourMeter,
 		&i.LastMaintenanceHourMeter, &i.EquipmentType, &i.MaintenanceHours)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, entities.ErrNotFoundEntity
+		}
 		return nil, fmt.Errorf("failed to get equipment: %w", err)
 	}
 

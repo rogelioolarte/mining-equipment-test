@@ -27,14 +27,14 @@ func NewEquipmentTypeUseCase(
 }
 
 func (u *EquipmentTypeUseCase) GetAll(ctx context.Context) ([]*dto.EquipmentTypeResponse, error) {
-	equiptmentList, err := u.EquipmentTypeRepository.GetAll(ctx)
+	equiptmentTypeList, err := u.EquipmentTypeRepository.GetAll(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	response := make([]*dto.EquipmentTypeResponse, 0, len(equiptmentList))
+	response := make([]*dto.EquipmentTypeResponse, 0, len(equiptmentTypeList))
 
-	for _, i := range equiptmentList {
+	for _, i := range equiptmentTypeList {
 		response = append(response, dto.ToResponseEquipmentType(i))
 	}
 

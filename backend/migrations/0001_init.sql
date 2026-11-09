@@ -1,4 +1,4 @@
-CREATE SCHEMA app;
+CREATE SCHEMA IF NOT EXISTS app;
 
 CREATE TABLE IF NOT EXISTS app.equipment_type (
     id uuid PRIMARY KEY NOT NULL,

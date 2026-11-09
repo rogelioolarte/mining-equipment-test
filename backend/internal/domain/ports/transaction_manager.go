@@ -30,4 +30,5 @@ type TransactionManager interface {
 	BeginTx(ctx context.Context, opts pgx.TxOptions) (context.Context, error)
 	Commit(ctx context.Context) error
 	Rollback(ctx context.Context) error
+	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }

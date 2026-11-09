@@ -22,11 +22,11 @@ func NewnEquipmentTypeHandler(
 }
 
 func (h *EquipmentTypeHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	h.logger.Info("Fetching all nEquipmentTypes")
+	h.logger.Info("Fetching All EquipmentTypes")
 
 	res, err := h.equipmentTypeUseCase.GetAll(r.Context())
 	if err != nil {
-		h.logger.Error("Failed while getting entities")
+		h.logger.Error("Failed while getting EquipmentTypes")
 		InternalServerError(w, err.Error())
 		return
 	}

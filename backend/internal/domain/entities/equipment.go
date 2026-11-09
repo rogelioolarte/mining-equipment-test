@@ -21,8 +21,12 @@ type Equipment struct {
 }
 
 func (e *Equipment) MaintenanceStatus() MaintenanceStatus {
-	if e == nil || e.LastMaintenanceHourMeter == nil || e.MaintenanceHours == nil {
+	if e == nil || e.MaintenanceHours == nil {
 		return MaintenanceStatusUnkown
+	}
+
+	if e.LastMaintenanceHourMeter == nil {
+		*e.LastMaintenanceHourMeter = 0
 	}
 
 	hoursSinceMaintenance := e.CurrentHourMeter - *e.LastMaintenanceHourMeter
