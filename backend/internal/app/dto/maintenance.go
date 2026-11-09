@@ -8,19 +8,19 @@ import (
 )
 
 type MaintenanceRequest struct {
-	EquipmentID            uuid.UUID `json:"equipment_id"`
-	HourMeterAtMaintenance int32     `json:"hm_maintenance"`
-	MaintenanceDate        time.Time `json:"maintenance_date"`
+	EquipmentID            uuid.UUID `json:"equipmentId"`
+	HourMeterAtMaintenance int32     `json:"hmMaintenance"`
+	MaintenanceDate        time.Time `json:"maintenanceDate"`
 	Description            *string   `json:"description,omitempty"`
 }
 
 type MaintenanceResponse struct {
 	ID                     uuid.UUID `json:"id"`
-	EquipmentID            uuid.UUID `json:"equipment_id"`
-	EquipmentCode          *string   `json:"equipment_code,omitempty"`
-	EquipmentType          *string   `json:"equipment_type,omitempty"`
-	HourMeterAtMaintenance int32     `json:"hm_maintenance"`
-	MaintenanceDate        time.Time `json:"maintenance_date"`
+	EquipmentID            uuid.UUID `json:"equipmentId"`
+	EquipmentCode          *string   `json:"equipmentCode,omitempty"`
+	EquipmentType          *string   `json:"equipmentType,omitempty"`
+	HourMeterAtMaintenance int32     `json:"hmMaintenance"`
+	MaintenanceDate        time.Time `json:"maintenanceDate"`
 	Description            *string   `json:"description,omitempty"`
 }
 

@@ -44,15 +44,6 @@ func (u *EquipmentUseCase) GetAll(ctx context.Context) ([]*dto.EquipmentResponse
 	return response, nil
 }
 
-func (u *EquipmentUseCase) GetByID(ctx context.Context, id uuid.UUID) (*dto.EquipmentResponse, error) {
-	equiptment, err := u.EquipmentRepository.GetByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	return dto.ToResponseEquipment(equiptment), nil
-}
-
 func (u *EquipmentUseCase) Create(ctx context.Context, request *dto.EquipmentRequest) (*dto.EquipmentResponse, error) {
 	entity, err := request.ToEntity()
 	if err != nil {

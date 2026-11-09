@@ -22,13 +22,11 @@ func SetupRoutes(
 			})
 
 			r.Route("/maintenance", func(r chi.Router) {
-				r.Get("/", maintenanceHanlder.GetAll)
 				r.Post("/", maintenanceHanlder.Create)
 			})
 
 			r.Route("/equipment", func(r chi.Router) {
 				r.Get("/", equipmentHandler.GetAll)
-				r.Get("/{id}", equipmentHandler.GetByID)
 				r.Get("/{id}/maintenance", maintenanceHanlder.GetAllByEquipmentID)
 				r.Post("/", equipmentHandler.Create)
 				r.Put("/{id}", equipmentHandler.UpdateById)

@@ -26,19 +26,6 @@ func NewnMaintenanceHandler(
 	}
 }
 
-func (h *MaintenanceHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	h.logger.Info("Fetching all Maintenances")
-
-	res, err := h.maintenanceUseCase.GetAll(r.Context())
-	if err != nil {
-		h.logger.Error("Failed while getting Maintenances")
-		InternalServerError(w, err.Error())
-		return
-	}
-
-	Success(w, res)
-}
-
 func (h *MaintenanceHandler) GetAllByEquipmentID(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	if idStr == "" {

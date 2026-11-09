@@ -29,21 +29,6 @@ func NewMaintenanceUseCase(
 	}
 }
 
-func (u *MaintenanceUseCase) GetAll(ctx context.Context) ([]*dto.MaintenanceResponse, error) {
-	maintenanceList, err := u.MaintenanceRepository.GetAll(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	response := make([]*dto.MaintenanceResponse, 0, len(maintenanceList))
-
-	for _, i := range maintenanceList {
-		response = append(response, dto.ToResponseMaintenance(i))
-	}
-
-	return response, nil
-}
-
 func (u *MaintenanceUseCase) GetAllByEquipmentID(ctx context.Context, id uuid.UUID) ([]*dto.MaintenanceResponse, error) {
 	maintenanceList, err := u.MaintenanceRepository.GetAllByEquipmentID(ctx, id)
 	if err != nil {

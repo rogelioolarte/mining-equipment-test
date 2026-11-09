@@ -3,7 +3,6 @@ package handlers
 import (
 	"minning/internal/app/dto"
 	"minning/internal/app/usecases"
-	"minning/internal/domain/entities"
 	"minning/internal/infra/logger"
 	"net/http"
 
@@ -32,34 +31,6 @@ func (h *EquipmentHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	res, err := h.equipmentUseCase.GetAll(r.Context())
 	if err != nil {
 		h.logger.Error("Failed while getting Equipments")
-		InternalServerError(w, err.Error())
-		return
-	}
-
-	Success(w, res)
-}
-
-func (h *EquipmentHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	if idStr == "" {
-		BadRequest(w, "ID is required")
-		return
-	}
-	ID, idErr := uuid.FromString(idStr)
-	if idErr != nil {
-		BadRequest(w, "Invalid ID")
-		return
-	}
-
-	h.logger.Info("Fetching Equipment By ID")
-
-	res, err := h.equipmentUseCase.GetByID(r.Context(), ID)
-	if err != nil {
-		h.logger.Error("Failed while getting Equipment")
-		if err == entities.ErrNotFoundEntity {
-			NotFound(w, "Equipment Not Found")
-			return
-		}
 		InternalServerError(w, err.Error())
 		return
 	}

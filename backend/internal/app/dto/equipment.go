@@ -8,7 +8,7 @@ import (
 
 type EquipmentRequest struct {
 	Code             string    `json:"code"`
-	TypeID           uuid.UUID `json:"type_id"`
+	TypeID           uuid.UUID `json:"typeId"`
 	CurrentHourMeter int32     `json:"current_hour_meter"`
 }
 
@@ -16,8 +16,8 @@ type EquipmentResponse struct {
 	ID                       uuid.UUID `json:"id"`
 	Code                     string    `json:"code"`
 	Type                     *string   `json:"type"`
-	CurrentHourMeter         int32     `json:"current_hour_meter"`
-	MaintenanceIntervalHours *int32    `json:"maintenance_interval_hours"`
+	CurrentHourMeter         int32     `json:"currentHourMeter"`
+	MaintenanceIntervalHours *int32    `json:"maintenanceIntervalHours"`
 	HoursSinceMaintenance    int32     `json:"hoursSinceMaintenance"`
 	LastMaintenanceHourMeter *int32    `json:"lastMaintenanceHourMeter"`
 	MaintenanceStatus        string    `json:"maintenanceStatus"`

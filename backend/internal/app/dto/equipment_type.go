@@ -9,7 +9,7 @@ import (
 type EquipmentTypeResponse struct {
 	ID               uuid.UUID `json:"id"`
 	Name             string    `json:"name"`
-	MaintenanceHours int32     `json:"maintenance_hours"`
+	MaintenanceHours int32     `json:"maintenanceHours"`
 }
 
 func ToResponseEquipmentType(e *entities.EquipmentType) *EquipmentTypeResponse {
