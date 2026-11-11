@@ -2,80 +2,74 @@
 
 [English](README.md) | [Español](README.es.md)
 
-An Angular and Go application for managing mining equipment and maintenance. Built as a Full Stack technical assessment, it tracks equipment, service intervals, maintenance history, and operating hours. The frontend and API are deployed as Vercel Services, with PostgreSQL hosted on Neon.
+An Angular and Go application for managing mining equipment, service intervals, maintenance history, and operating hours. The Angular frontend calls a Go REST API; PostgreSQL stores application data. Deploy the frontend and API to Vercel and host PostgreSQL on Neon.
 
 **Demo:** [mining-equipment-test.vercel.app](https://mining-equipment-test.vercel.app/)
 
 ## Features
 
 - Register, view, edit, and delete equipment.
-- View equipment types and their maintenance intervals.
-- Record maintenance and view each equipment's service history.
-- Track the hour meter, hours since the last service, and service-cycle status.
-
-## Technology
-
-| Area | Technologies |
-| --- | --- |
-| Frontend | Angular, TypeScript, and Bun |
-| Backend | Go, REST API, and Docker |
-| Database | PostgreSQL on Neon |
-| Deployment | Vercel Services |
+- View equipment types, maintenance intervals, and service history.
+- Track hour meters, hours since service, and service-cycle status.
 
 ## Architecture
 
-The Angular frontend consumes the Go REST API. PostgreSQL stores equipment and maintenance records, and the backend applies database migrations at startup. Vercel hosts the frontend and backend; Neon hosts the database. The repository's `vercel.json` defines both services and routes `/api/*` requests to the backend.
+Vercel hosts the Angular frontend and Go API; Neon hosts PostgreSQL. The API applies database migrations at startup. `vercel.json` defines both Vercel services, provides an `API_URL` service binding, and routes `/api/*` requests to the backend. Angular requests use the `/api/v1` path. The current production environment file uses the default project domain directly.
 
 ## Local development
 
 - Backend setup and commands: [`backend/README.md`](backend/README.md)
 - Frontend setup and commands: [`frontend/README.md`](frontend/README.md)
+- Local backend and frontend development may require [Go](https://go.dev/doc/install) and [Bun](https://bun.sh/docs/installation), respectively; neither is required to run `./deploy.sh`.
 
-## Deploy to production
+## Deploy your own instance
 
-### Prerequisites
+### Requirements
 
-- A GitHub repository connected to Vercel and a Vercel account with **Services** enabled. Vercel Services are currently in beta.
-- A Neon project and a database role with permission to run the application's migrations.
-- Bash and the Vercel CLI installed, plus an authenticated CLI session (`vercel login`).
-- Docker installed and its daemon running when using local `vercel dev` or testing the backend container. `./deploy.sh` does not invoke Docker locally; it delegates builds and deployment to Vercel.
-- A local root `.env` file based on [`.env.example`](.env.example). It is ignored by Git; never commit it.
+- A GitHub repository and a Vercel account with **Services** enabled.
+- A [Neon account](https://neon.tech/) and a database role allowed to create and update application tables.
+- Bash, [Vercel CLI](https://vercel.com/docs/cli), a local checkout of this repository, and a root `.env` file based on [`.env.example`](.env.example). Follow the [Vercel CLI getting-started guide](https://vercel.com/docs/getting-started-with-vercel) to install the CLI and authenticate with `vercel login`. The `.env` file is ignored by Git; do not commit it.
 
-### Set up Neon
+`./deploy.sh` requires Bash and an authenticated Vercel CLI session. It does not require Docker installed or running locally.
 
-Create a Neon project and database, then copy its connection details into the root `.env`: host, port, database name, role name, and role password. Use the host without a URL scheme, keep port `5432`, and set `MINNING_DB_SSLMODE=require`. Neon must accept connections from Vercel; review the project's Neon network access settings if the backend cannot connect.
+### 1. Create the Neon database
 
-The backend applies migrations during startup. Use a database role that can create and update the application's tables, and avoid deploying multiple production instances while a migration is in progress.
+Create a Neon project and database. Copy its connection settings into the root `.env`: host (without a URL scheme), port (`5432`), database name, role, and role password. Set `MINNING_DB_SSLMODE=require`. Check [Neon's connection guide](https://neon.tech/docs/connect/connect-from-any-app) if you need help finding the connection details. Vercel must be able to connect to the database. The backend runs migrations at startup, so use a role with permission to create and update tables.
 
-### Configure Vercel
+### 2. Configure the Vercel project and backend
 
-1. Import the repository into Vercel and select **Services** as the project framework.
-2. Keep the repository's `vercel.json` service configuration. It defines the backend container from `backend/` and the Angular frontend from `frontend/`.
-3. `vercel.json` defines an `API_URL` service binding and rewrites `/api/*` to the backend. The current Angular production bundle still uses the hard-coded URL in `frontend/src/environments/environment.ts`; the default Vercel project domain works as configured. A custom domain requires changing that source URL and rebuilding/redeploying the frontend.
-4. Link this checkout to the Vercel project with `vercel link`.
+1. Import your GitHub repository into Vercel, enable **Services**, and keep the repository's `vercel.json` configuration. It defines the Go backend from `backend/` and the Angular frontend from `frontend/`.
+2. From the repository root, authenticate and link this checkout to your Vercel project:
 
-The backend listens on `MINNING_HTTP_PORT` (default `8080`). The deployment script sets Vercel's container `PORT` to the same value, so the service can receive traffic on the application's configured port. Set `MINNING_HTTP_HOST=0.0.0.0` and set `MINNING_HTTP_ALLOWED_ORIGINS` to the public frontend origin in the root `.env`.
+   ```bash
+   vercel login
+   vercel link
+   ```
 
-### Deploy
+3. In the root `.env`, set the Neon values and backend settings. Set `MINNING_HTTP_HOST=0.0.0.0`, and set `MINNING_HTTP_ALLOWED_ORIGINS` to the **public frontend origin**, such as `https://your-project.vercel.app` (origin only, without a path). This is the browser CORS allowlist. The backend listens on `MINNING_HTTP_PORT` (default `8080`); the deploy script sets the Vercel container `PORT` to match.
 
-Review the root `.env`, then run:
+### 3. Deploy the API and frontend
+
+Review `.env`, then run from the repository root:
 
 ```bash
 ./deploy.sh
 ```
 
-The script validates required settings and CLIs, overwrites the supported Vercel **production** variables without displaying their values, marks only `MINNING_DB_PASSWORD` as sensitive, then runs `vercel deploy --prod`. Vercel CLI authentication and project linking must already be configured. To change a setting later, update `.env` and rerun the script; Vercel environment changes apply to new deployments. Builds run on Vercel; the script does not use local Docker.
+The script validates its required settings and CLIs, loads supported `MINNING_*` settings into Vercel's **production** environment, then runs `vercel deploy --prod`. It marks only `MINNING_DB_PASSWORD` as sensitive. `API_URL` is supplied by `vercel.json`; the script ignores it, so do not configure it manually in Vercel. Vercel performs the builds and deployment; no local Docker daemon is used. To apply environment changes, update `.env` and deploy again.
 
-Use plain, unquoted `KEY=VALUE` lines in `.env`; the script parses assignments as data and never sources or evaluates the file. It uploads only the documented `MINNING_*` backend settings (plus the container `PORT`) and ignores `API_URL` and unrelated keys. Blank optional values are skipped, so they do not remove an existing Vercel value; remove one separately with `vercel env rm KEY production` if desired.
+Use plain, unquoted `KEY=VALUE` lines in `.env`. The script parses the file as data and never sources or evaluates it. It uploads documented backend `MINNING_*` settings (and the container `PORT`), ignores `API_URL` and unrelated keys, and skips blank optional values. A blank value does not remove an existing Vercel variable; remove one separately with `vercel env rm KEY production` if needed.
 
-## Configuration notes
+### Custom domains and API routing
+
+The frontend's API base URL must use the API origin followed by `/api/v1`. `vercel.json` provides `API_URL` and routes `/api/*` to the Go backend. However, `frontend/src/environments/environment.ts` currently hardcodes `https://mining-equipment-test.vercel.app/api/v1` in the Angular production environment. The default project domain works as configured. If you use a custom frontend domain, update that file to point to the intended API origin plus `/api/v1`, then rebuild and redeploy the frontend. Also set `MINNING_HTTP_ALLOWED_ORIGINS` to the frontend's public origin in `.env` and redeploy so browser requests pass CORS.
+
+## Configuration reference
 
 | Setting | Purpose |
 | --- | --- |
-| `MINNING_DB_HOST`, `MINNING_DB_PORT`, `MINNING_DB_NAME`, `MINNING_DB_USER`, `MINNING_DB_PASSWORD` | Neon PostgreSQL connection. Keep the password only in the ignored `.env` and Vercel's encrypted environment settings. |
+| `MINNING_DB_HOST`, `MINNING_DB_PORT`, `MINNING_DB_NAME`, `MINNING_DB_USER`, `MINNING_DB_PASSWORD` | Neon PostgreSQL connection. Keep the password only in the ignored `.env` and Vercel's protected environment settings. |
 | `MINNING_DB_SSLMODE` | Use `require` for Neon TLS connections. |
-| `MINNING_HTTP_HOST`, `MINNING_HTTP_PORT`, `MINNING_HTTP_ALLOWED_ORIGINS` | Backend bind address, listen port, and browser origin allowlist. |
+| `MINNING_HTTP_HOST`, `MINNING_HTTP_PORT`, `MINNING_HTTP_ALLOWED_ORIGINS` | Backend bind address, listen port, and allowed frontend browser origin. |
 | `MINNING_ENV`, `MINNING_LOG_FORMAT`, `MINNING_LOG_LEVEL` | Production runtime and logging configuration. |
 | `MINNING_HTTP_READ_TIMEOUT`, `MINNING_HTTP_WRITE_TIMEOUT`, `MINNING_DB_MAX_CONNS`, `MINNING_DB_MIN_CONNS`, `MINNING_MIGRATION_DIR_PATH`, `MINNING_MIGRATION_PLACEHOLDERS` | Optional backend settings; blank optional values are not uploaded. |
-
-The production Angular source currently targets `https://mining-equipment-test.vercel.app/api/v1`. That project domain works as configured. For a different custom domain, update `frontend/src/environments/environment.ts` to use the new API origin and rebuild/redeploy the frontend. The backend CORS allowlist must also include the frontend's public origin.
